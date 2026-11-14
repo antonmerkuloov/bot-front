@@ -1,22 +1,17 @@
 [build]
-  # Устанавливаем зависимости и для фронта, и для бэка
-  command = "cd frontend && npm install && npm run build && cd ../backend && npm install"
-  # Указываем, откуда брать готовый сайт
+  command = "cd frontend && npm install --include=dev && npm run build && cd ../backend && npm install"
   publish = "frontend/dist"
 
 [functions]
-  # Указываем, где лежат наши серверные функции
   directory = "backend/netlify/functions"
   node_bundler = "esbuild"
 
-# Перенаправляем все запросы с /api на наши функции
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api/:splat"
   status = 200
   force = true
 
-# Пинг для UptimeRobot (хотя он теперь не нужен, но пусть будет)
 [[redirects]]
   from = "/ping"
   to = "/.netlify/functions/api/ping"
