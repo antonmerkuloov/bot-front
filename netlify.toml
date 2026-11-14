@@ -1,5 +1,6 @@
 [build]
-  command = "cd frontend && npm install --include=dev && npm run build && cd ../backend && npm install"
+  # Сначала ставим зависимости в корне (для функций), потом собираем фронт
+  command = "npm install && cd frontend && npm install --include=dev && npm run build"
   publish = "frontend/dist"
 
 [functions]
