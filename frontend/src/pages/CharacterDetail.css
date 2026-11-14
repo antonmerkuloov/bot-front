@@ -1,0 +1,21 @@
+@import './Circles.css';
+
+.tabs-bar { display: flex; gap: 8px; margin-top: 16px; border-bottom: 1px solid #3f4147; }
+.tab-btn { background: none; color: #b5bac1; padding: 10px 20px; border-radius: 6px 6px 0 0; border-bottom: 2px solid transparent; font-size: 15px; }
+.tab-btn:hover { background-color: #2b2d31; color: #fff; }
+.tab-btn.active { color: #fff; border-bottom: 2px solid #5865f2; font-weight: bold; }
+
+.attributes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 20px 0; }
+.attr-card { background-color: #2b2d31; padding: 16px; border-radius: 8px; border: 1px solid #3f4147; }
+.attr-card h3 { font-size: 14px; color: #b5bac1; margin-bottom: 12px; }
+.attr-row { display: flex; align-items: center; gap: 8px; }
+.attr-row input { width: 100%; padding: 8px; text-align: center; }
+.attr-row input.max-input { background-color: #1e1f22; color: #b5bac1; }
+.attr-row span { color: #888; font-size: 18px; }
+
+.modal-skill-list { display: flex; flex-direction: column; gap: 4px; background-color: #1e1f22; padding: 10px; border-radius: 6px; border: 1px solid #3f4147; }
+.modal-skill-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background-color: #2b2d31; border-radius: 6px; cursor: pointer; transition: background-color 0.15s; }
+.modal-skill-item:hover { background-color: #35373c; }
+.modal-skill-item.selected { background-color: #5865f2; color: white; }
+
+.modal-form .pagination-footer button { padding: 6px 12px; font-size: 13px; }

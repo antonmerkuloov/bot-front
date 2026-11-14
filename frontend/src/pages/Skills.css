@@ -1,0 +1,102 @@
+/* Главный контейнер страницы */
+.skills-page {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden; /* Сама страница не скроллится */
+}
+
+/* ВЕРХНЯЯ ШАПКА (фиксированная высота) */
+.page-header-area {
+    flex-shrink: 0; /* Не сжимается */
+    padding: 32px 32px 20px 32px;
+    background-color: #1e1f22;
+    border-bottom: 1px solid #3f4147;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.header-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header-top h1 { font-size: 24px; color: #fff; }
+
+.filters-bar {
+    display: flex;
+    gap: 12px;
+    background-color: #2b2d31;
+    padding: 16px;
+    border-radius: 8px;
+}
+
+.search-input { flex: 1; }
+.filters-bar select { min-width: 150px; }
+
+/* СКРОЛЛЯЩАЯСЯ ЗОНА (Таблица) */
+.table-scroll-area {
+    flex: 1; /* Занимает всё оставшееся место */
+    overflow-y: auto; /* Скроллится только она */
+    padding: 20px 32px;
+}
+
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    background-color: #2b2d31;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.data-table th, .data-table td {
+    padding: 14px 16px;
+    text-align: left;
+    border-bottom: 1px solid #3f4147;
+}
+.data-table th {
+    background-color: #35373c;
+    color: #b5bac1;
+    font-weight: 500;
+    font-size: 13px;
+    text-transform: uppercase;
+    position: sticky; /* Заголовки таблицы тоже прилипают */
+    top: 0;
+    z-index: 5;
+}
+.data-table tr:last-child td { border-bottom: none; }
+
+/* НИЖНЯЯ ПАНЕЛЬ (Пагинация) */
+.pagination-footer {
+    flex-shrink: 0; /* Не сжимается */
+    padding: 16px 32px;
+    background-color: #1e1f22;
+    border-top: 1px solid #3f4147;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+}
+
+.pagination-footer button {
+    background-color: #35373c;
+    color: #fff;
+    padding: 8px 16px;
+}
+.pagination-footer button:hover:not(:disabled) { background-color: #4e5058; }
+
+/* Модалка */
+.modal-form { display: flex; flex-direction: column; gap: 16px; }
+.form-row { display: flex; flex-direction: column; gap: 8px; }
+.form-row label { font-size: 14px; color: #b5bac1; }
+.form-row input, .form-row select { width: 100%; }
+.checkbox-row { flex-direction: row; align-items: center; gap: 12px; }
+.form-actions { display: flex; gap: 12px; margin-top: 8px; }
+
+.btn-primary.small, .btn-danger.small, .btn-secondary.small {
+    padding: 6px 12px;
+    font-size: 13px;
+    margin-right: 8px;
+}
+.error-msg { color: #f04747; }

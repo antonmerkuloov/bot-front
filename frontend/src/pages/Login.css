@@ -1,0 +1,5 @@
+.login-container { display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
+.login-form { background-color: #2b2d31; padding: 40px; border-radius: 12px; width: 100%; max-width: 400px; display: flex; flex-direction: column; gap: 16px; }
+.login-form h1 { font-size: 24px; color: #fff; }
+.login-subtitle { color: #888; font-size: 14px; margin-bottom: 8px; }
+.login-error { color: #f04747; font-size: 13px; }
