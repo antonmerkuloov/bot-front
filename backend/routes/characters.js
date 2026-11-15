@@ -234,69 +234,83 @@ router.get('/:id/spells', async (req, res) => {
 });
 
 router.post('/:id/spells', async (req, res) => {
-    const { spell_id } = req.body;
-    const charId = req.params.id;
+    try {
+        const { spell_id } = req.body;
+        const charId = req.params.id;
 
-    const { data: spell } = await supabase.from('spells').select('circle_id').eq('id', spell_id).single();
-    if (!spell) return res.status(404).json({ error: 'Заклинание не найдено' });
+        if (!spell_id) return res.status(400).json({ error: 'ID заклинания не передан' });
 
-    let circleLevel = 0;
-    const { data: circleSkill } = await supabase.from('skills').select('id').eq('magic_circle_id', spell.circle_id).limit(1);
-    if (circleSkill && circleSkill.length > 0) {
-        const { data: charCircle } = await supabase.from('character_skills').select('experience').eq('character_id', charId).eq('skill_id', circleSkill[0].id).limit(1);
-        const exp = charCircle && charCircle.length > 0 ? charCircle[0].experience : 0;
-        if (exp >= 160) circleLevel = 5;
-        else if (exp >= 140) circleLevel = 4;
-        else if (exp >= 100) circleLevel = 3;
-        else if (exp >= 80) circleLevel = 2;
-        else if (exp >= 40) circleLevel = 1;
-    }
+        // 1. Получаем заклинание (нужен circle_id)
+        const { data: spell, error: spellErr } = await supabase.from('spells').select('circle_id').eq('id', spell_id).single();
+        if (spellErr || !spell) return res.status(404).json({ error: 'Заклинание не найдено в базе' });
 
-    let maxStorage = 2;
-    const { data: memorySkill } = await supabase.from('skills').select('id').ilike('name', '%Память%').limit(1);
-    if (memorySkill && memorySkill.length > 0) {
-        const { data: charMemory } = await supabase.from('character_skills').select('experience').eq('character_id', charId).eq('skill_id', memorySkill[0].id).limit(1);
-        const memExp = charMemory && charMemory.length > 0 ? charMemory[0].experience : 0;
+        // 2. Получаем ВСЕ навыки персонажа (1 запрос)
+        const { data: charSkills } = await supabase.from('character_skills')
+            .select('experience, skill_id, skills(name, magic_circle_id)')
+            .eq('character_id', charId);
+            
+        let circleLevel = 0;
+        const circleSkill = (charSkills || []).find(cs => cs.skills?.magic_circle_id === spell.circle_id);
+        const circleExp = circleSkill ? circleSkill.experience : 0;
+        if (circleExp >= 160) circleLevel = 5;
+        else if (circleExp >= 140) circleLevel = 4;
+        else if (circleExp >= 100) circleLevel = 3;
+        else if (circleExp >= 80) circleLevel = 2;
+        else if (circleExp >= 40) circleLevel = 1;
+
+        let maxStorage = 2;
+        const memorySkill = (charSkills || []).find(cs => cs.skills?.name.toLowerCase().includes('память'));
+        const memExp = memorySkill ? memorySkill.experience : 0;
         if (memExp >= 40) maxStorage = Math.min(8, 3 + Math.floor((memExp - 40) / 10));
+
+        // 3. Получаем ВСЕ текущие заклинания персонажа (1 запрос)
+        const { data: currentSpells } = await supabase.from('character_spells')
+            .select('spell_id, is_equipped, is_phantom, spells(circle_id)')
+            .eq('character_id', charId);
+
+        if ((currentSpells || []).some(s => s.spell_id === spell_id)) {
+            return res.status(400).json({ error: 'У персонажа уже есть это заклинание' });
+        }
+
+        let equippedCount = 0;
+        let memoryCount = 0;
+        let phantomCount = 0;
+
+        (currentSpells || []).forEach(s => {
+            if (s.is_equipped && s.spells?.circle_id === spell.circle_id) equippedCount++;
+            else if (!s.is_equipped && !s.is_phantom) memoryCount++;
+            else if (s.is_phantom) phantomCount++;
+        });
+
+        let is_equipped = false;
+        let is_phantom = false;
+        
+        if (equippedCount < circleLevel) {
+            is_equipped = true;
+        } else if (memoryCount < maxStorage) {
+            is_equipped = false;
+        } else if (phantomCount === 0) {
+            is_equipped = false;
+            is_phantom = true;
+        } else {
+            return res.status(400).json({ error: 'Нет свободных мест: слоты круга, память и фантомная ячейка заняты.' });
+        }
+
+        // 4. Вставляем заклинание
+        const { error } = await supabase.from('character_spells').insert([{
+            character_id: charId, 
+            spell_id: spell_id, 
+            is_equipped, 
+            is_phantom
+        }]);
+        
+        if (error) throw error;
+        res.json({ success: true, is_equipped, is_phantom });
+
+    } catch (err) {
+        console.error("Ошибка при выдаче заклинания:", err);
+        res.status(500).json({ error: err.message || 'Ошибка базы данных' });
     }
-
-    const { data: currentSpells } = await supabase.from('character_spells').select('spell_id, is_equipped, is_phantom').eq('character_id', charId);
-    
-    let equippedCount = 0;
-    let memoryCount = 0;
-    let phantomCount = 0;
-    
-    if (currentSpells && currentSpells.length > 0) {
-        const spellIds = currentSpells.map(s => s.spell_id);
-        const { data: spellsData } = await supabase.from('spells').select('id, circle_id').in_('id', spellIds);
-        const spellCircleMap = {};
-        if (spellsData) spellsData.forEach(s => spellCircleMap[s.id] = s.circle_id);
-
-        equippedCount = currentSpells.filter(s => s.is_equipped && spellCircleMap[s.spell_id] === spell.circle_id).length;
-        memoryCount = currentSpells.filter(s => !s.is_equipped && !s.is_phantom).length;
-        phantomCount = currentSpells.filter(s => s.is_phantom).length;
-    }
-
-    let is_equipped = false;
-    let is_phantom = false;
-    
-    if (equippedCount < circleLevel) {
-        is_equipped = true;
-    } else if (memoryCount < maxStorage) {
-        is_equipped = false;
-    } else if (phantomCount === 0) {
-        is_equipped = false;
-        is_phantom = true;
-    } else {
-        return res.status(400).json({ error: 'Нет свободных мест: слоты круга, память и фантомная ячейка заняты.' });
-    }
-
-    const { error } = await supabase.from('character_spells').insert([{
-        character_id: charId, spell_id, is_equipped, is_phantom
-    }]);
-    
-    if (error) return res.status(500).json({ error: error.message });
-    res.json({ success: true, is_equipped, is_phantom });
 });
 
 router.put('/:id/spells/:spell_id/status', async (req, res) => {
